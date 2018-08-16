@@ -24,13 +24,11 @@ public class CamelSagaPaymentService {
                     .param().type(RestParamType.header).name("id").required(true).endParam()
                     .route()
                     .saga()
-                        .propagation(SagaPropagation.MANDATORY)
-                        .option("id", header("id"))
-                        .compensation("direct:cancelPayment")
+                    .propagation(SagaPropagation.MANDATORY).option("id", header("id")).compensation("direct:cancelPayment")
                     .log("Paying ${header.type} for order #${header.id}")
                     .choice()
-                        .when(x -> Math.random() >= 0.85)
-                            .throwException(new RuntimeException("Random failure during payment"))
+                    .when(x -> Math.random() >= 0.85)
+                    .throwException(new RuntimeException("Random failure during payment"))
                     .end();
 
             from("direct:cancelPayment")

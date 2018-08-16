@@ -8,6 +8,7 @@
     <artifactId>camel-saga-quickstart</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+
     <modules>
         <module>camel-saga-app</module>
         <module>camel-saga-train-service</module>
@@ -18,12 +19,9 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-
-        <spring-boot.version>1.5.10.RELEASE</spring-boot.version>
+        <spring-boot.version>1.5.14.RELEASE</spring-boot.version>
         <camel.version>2.21.0</camel.version>
-
-
-        <fabric8-maven-plugin.version>3.5.38</fabric8-maven-plugin.version>
+        <fabric8-maven-plugin.version>3.5.41</fabric8-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -45,7 +43,6 @@
         </dependencies>
     </dependencyManagement>
 
-
     <build>
         <plugins>
             <plugin>
@@ -54,12 +51,11 @@
                 <version>${fabric8-maven-plugin.version}</version>
                 <executions>
                     <execution>
-                        <goals /> <!-- Do not bind by default -->
+                        <goals/> <!-- Do not bind by default -->
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
 
-    
 </project>

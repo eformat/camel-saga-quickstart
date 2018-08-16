@@ -62,7 +62,38 @@ This project uses the [Fabric8 Maven Plugin](https://maven.fabric8.io/) to deplo
 After you connect to the cluster, type the following command on a terminal from the repository root:
 
 ```
-oc create -f lra-coordinator.yaml
+
+--oc create -f lra-coordinator.yaml
+
+--
+-- lra template does not work ?
+-- try https://github.com/xstefank/lra-service
+--
+cd ~/git/lra-service/lra-coordinator
+mvn clean package fabric8:deploy
+
+oc create -f - <<EOF
+{
+  "apiVersion": "v1",
+  "kind": "PersistentVolumeClaim",
+  "metadata": {
+    "name": "lra-data"
+  },
+  "spec": {
+    "accessModes": [ "ReadWriteOnce" ],
+    "resources": {
+     "requests": {
+        "storage": "1Gi"
+      }
+    }
+  }
+}
+EOF
+
+oc volume dc/lra-coordinator --add --overwrite -t persistentVolumeClaim --claim-name=lra-data --name=lra-data --mount-path=/deployments/data
+
+--
+cd ~/git/camel-saga-quickstart
 mvn clean fabric8:deploy
 ```
 

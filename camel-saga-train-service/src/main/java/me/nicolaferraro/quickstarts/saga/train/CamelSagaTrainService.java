@@ -23,9 +23,7 @@ public class CamelSagaTrainService {
                     .param().type(RestParamType.header).name("id").required(true).endParam()
                     .route()
                     .saga()
-                        .propagation(SagaPropagation.SUPPORTS)
-                        .option("id", header("id"))
-                        .compensation("direct:cancelPurchase")
+                    .propagation(SagaPropagation.SUPPORTS).option("id", header("id")).compensation("direct:cancelPurchase")
                     .log("Buying train seat #${header.id}")
                     .to("http4://camel-saga-payment-service:8080/api/pay?bridgeEndpoint=true&type=train")
                     .log("Payment for train #${header.id} done");

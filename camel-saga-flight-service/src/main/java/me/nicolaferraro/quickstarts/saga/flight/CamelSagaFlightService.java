@@ -21,21 +21,17 @@ public class CamelSagaFlightService {
 
             restConfiguration().port(8383);
 
-
             rest().post("/flight/buy")
                     .param().type(RestParamType.header).name("id").required(true).endParam()
                     .route()
                     .saga()
-                        .propagation(SagaPropagation.MANDATORY)
-                        .option("id", header("id"))
-                        .compensation("direct:cancelPurchase")
+                    .propagation(SagaPropagation.MANDATORY).option("id", header("id")).compensation("direct:cancelPurchase")
                     .log("Buying flight #${header.id}")
                     .to("http4://camel-saga-payment-service:8080/api/pay?bridgeEndpoint=true&type=flight")
                     .log("Payment for flight #${header.id} done");
 
             from("direct:cancelPurchase")
                     .log("Flight purchase #${header.id} has been cancelled");
-
         }
     }
 
