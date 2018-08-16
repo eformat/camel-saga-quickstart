@@ -24,6 +24,7 @@ public class CamelSagaApp {
                     .setHeader(Exchange.HTTP_METHOD, constant("POST"))
                     .log("Executing saga #${header.id}")
                     .to("http4://camel-saga-train-service:8080/api/train/buy/seat")
+                    .removeHeader("type")
                     .to("http4://camel-saga-flight-service:8080/api/flight/buy");
         }
     }

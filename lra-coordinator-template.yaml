@@ -1,0 +1,154 @@
+kind: Template
+apiVersion: v1
+metadata:
+  name: lra-coordinator
+  annotations:
+    openshift.io/display-name: "Narayana LRA Coordinator"
+    description: >-
+      Coordinator of REST long running actions (transactions), how that works. See spec:
+      https://github.com/jbosstm/microprofile-sandbox/blob/0009-LRA/proposals/0009-LRA/0009-LRA.md
+    template.openshift.io/long-description: >-
+      This template defines deployment of Narayana LRA (long running actions) coordinator.
+      This coordinator is deployed as a service available for any deployment in the project.
+      The coordinator offers REST endpoints where applications can contact it and enlist actions
+      to a LRA action. If satisfies the spec definition the application is later informed
+      if LRA was successfuly completed or failed (compensate is needed).
+      The transaction handling is based on Saga pattern.
+    tags: "java, transaction, saga"
+    iconClass: icon-jboss
+    template.openshift.io/provider-display-name: "Red Hat, Inc."
+    template.openshift.io/documentation-url: "https://github.com/jbosstm/narayana/tree/master/rts/lra/lra-coordinator"
+    template.openshift.io/support-url: "https://access.redhat.com"
+  message: "LRA coordinator is ready to serve long running actions (LRAs)"
+labels:
+  template: "lra-coordinator"
+parameters:
+  - name: APPLICATION_NAME
+    value: lra-coordinator
+    displayName: "LRA Coordinator App Name"
+    description: "The name of the application created by this template."
+    required: true
+  - name: DOCKER_IMAGE
+    value: "docker.io/jbosstm/lra-coordinator:latest"
+    displayName: "Docker image of LRA coordinator"
+    required: true
+  - name: VOLUME_NAME
+    displayName: "Persistent Volume Name"
+    description: >-
+      If you want to bind the lra coordinator transaction log store to the specific
+      volume defined by you beforehand then use the name of the persistent volume here.
+      If you are running on Red Hat CDK/Minishift then there are persistent volumes
+      defined for your testing already. The naming is 'pv0001' up to 'pv0100'.
+      But if you are fine with whatever volume being used just leave this empty.
+    value:
+    required: false
+  - name: VOLUME_CAPACITY
+    displayName: "Volume Capacity"
+    description: "Volume space available for transaction log store, e.g. 512Mi, 2Gi."
+    value: "200Mi"
+    required: true
+objects:
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    labels:
+      app: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${VOLUME_CAPACITY}
+    volumeName: ${VOLUME_NAME}
+- kind: Service
+  apiVersion: v1
+  metadata:
+    labels:
+      app: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: ${APPLICATION_NAME}
+      deploymentconfig: ${APPLICATION_NAME}
+    type: ClusterIP
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    labels:
+      app: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    replicas: 1
+    selector:
+      app: ${APPLICATION_NAME}
+      deploymentconfig: ${APPLICATION_NAME}
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: ${APPLICATION_NAME}
+          deploymentconfig: ${APPLICATION_NAME}
+      spec:
+        containers:
+        - imagePullPolicy: IfNotPresent
+          name: ${APPLICATION_NAME}
+          env:
+          - name: AB_JOLOKIA_OFF
+            value: "true"
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /lra-coordinator
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 180
+          readinessProbe:
+            httpGet:
+              path: /lra-coordinator
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 10
+          volumeMounts:
+          - name: ${APPLICATION_NAME}-data
+            mountPath: /data
+        volumes:
+        - name: ${APPLICATION_NAME}-data
+          persistentVolumeClaim:
+            claimName: ${APPLICATION_NAME}
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${APPLICATION_NAME}
+        from:
+          kind: ImageStreamTag
+          name: ${APPLICATION_NAME}:1.0
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    labels:
+      app: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    lookupPolicy:
+      local: true
+    tags:
+    - from:
+        kind: DockerImage
+        name: ${DOCKER_IMAGE}
+      generation: 0
+      importPolicy: {}
+      name: "1.0"
+      referencePolicy:
+        type: Source
