@@ -43,7 +43,7 @@ public class CamelSagaPaymentService {
                         public void process(Exchange exchange) throws Exception {
                             String id = exchange.getIn().getHeader("id").toString();
                             String type = exchange.getIn().getHeader("type").toString();
-                            exchange.getIn().setBody("Payment for " + type + " #" + id);
+                            exchange.getIn().setBody("Payment Booked for " + type + " #" + id);
                             exchange.getIn().setHeader(KafkaConstants.PARTITION_KEY, 0);
                             exchange.getIn().setHeader(KafkaConstants.KEY, id);
                         }

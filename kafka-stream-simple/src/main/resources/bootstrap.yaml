@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: kafka-stream-simple
+  cloud:
+    kubernetes:
+      reload:
+        enabled: false
+        mode: polling
+        period: 5000
+      config:
+        sources:
+          - name: other
+          - name: ${spring.application.name}

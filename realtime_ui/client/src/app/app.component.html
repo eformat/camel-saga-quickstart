@@ -1,0 +1,31 @@
+<!--The content below is only a placeholder and can be replaced.-->
+<div style="text-align:left">
+  <h2>Saga Trips {{ title }}</h2>
+</div>
+
+<div class="grid-container">
+  <div class="item1">
+    <h3 class="left">Payments</h3>
+    <igx-grid [width]="'650px'" #grid1 id="grid1" [rowHeight]="30" [data]="pay" [height]="'700px'" [paging]="true" [perPage]="15" [paginationTemplate]="pager" [autoGenerate]="false">
+      <igx-column [sortable]="true" width="90px" field="id" header="ID" dataType="string"></igx-column>
+      <igx-column width="280px" field="pt" header="Train" dataType="string"></igx-column>
+      <igx-column width="280px" field="pf" header="Flight" dataType="string"></igx-column>
+    </igx-grid>
+  </div>
+  <div class="item2">
+    <h3 class="left">Flights</h3>
+    <igx-grid [width]="'370px'" #grid2 id="grid2" [rowHeight]="30" [data]="flight" [height]="'300px'" [paging]="true" [perPage]="5" [paginationTemplate]="pager" [autoGenerate]="false">
+      <!--igx-column [pinned]="true" [sortable]="true" width="130px" field="Ticker" header="Ticker" dataType="string"></igx-column-->
+      <igx-column [sortable]="true" width="90px" field="id" header="ID" dataType="string"></igx-column>
+      <igx-column width="280px" field="bf" header="Flight" dataType="string"></igx-column>
+    </igx-grid>
+  </div>
+  <div class="item3">
+    <h3 class="left">Trains</h3>
+    <igx-grid [width]="'370px'" #grid2 id="grid3" [rowHeight]="30" [data]="train" [height]="'300px'" [paging]="true" [perPage]="5" [paginationTemplate]="pager" [autoGenerate]="false">
+      <!--igx-column [pinned]="true" [sortable]="true" width="130px" field="Ticker" header="Ticker" dataType="string"></igx-column-->
+      <igx-column [sortable]="true" width="90px" field="id" header="ID" dataType="string"></igx-column>
+      <igx-column width="280px" field="bt" header="Train" dataType="string"></igx-column>
+    </igx-grid>
+  </div>
+</div>

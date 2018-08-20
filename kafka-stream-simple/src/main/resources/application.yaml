@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: kafka-stream-simple
+management:
+  endpoint:
+    restart:
+      enabled: true
+    health:
+      enabled: true
+    info:
+      enabled: true
