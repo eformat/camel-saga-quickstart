@@ -225,3 +225,12 @@ oc expose svc ui-client
 - CQRS blocking read instead if sliding window
 - Payload to json instead of strings
 - Single replica dtx manager (narayana) is not H/A in OCP - scaling still to be supported
+
+
+#### References
+
+- https://github.com/apache/camel/blob/master/camel-core/src/main/docs/eips/saga-eip.adoc
+- https://www.nicolaferraro.me/2018/04/25/saga-pattern-in-apache-camel/
+- https://www.infragistics.com/community/blogs/b/infragistics/posts/four-simple-steps-to-working-with-ignite-ui-for-angular-grid-and-rest-service
+- https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Streams+Join+Semantics
+- http://jbossts.blogspot.com/2017/12/narayana-lra-implementation-of-saga.html
