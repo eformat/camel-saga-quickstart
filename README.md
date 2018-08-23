@@ -156,7 +156,7 @@ So deploy manual build
 
 ```bash
 git clone git@github.com:eformat/lra-service.git
-cd /home/mike/git/lra-service/lra-coordinator
+cd ~/git/lra-service/lra-coordinator
 mvn clean package fabric8:deploy
 ```
 
@@ -197,7 +197,7 @@ mvn clean fabric8:deploy
 
 ```bash
 oc import-image --all --insecure=true -n openshift --confirm registry.access.redhat.com/rhscl/nodejs-8-rhel7
-cd ~/home/mike/git/camel-saga-quickstart/realtime_ui/server
+cd ~/git/camel-saga-quickstart/realtime_ui/server
 oc new-build --binary --name=ui-server -l app=ui-server -i nodejs-8-rhel7
 oc start-build ui-server --from-dir=. --follow
 -- -e KAFKA_URL
@@ -209,7 +209,7 @@ oc expose svc ui-server
 ##### UI Client
 
 ```bash
-cd ~/home/mike/git/camel-saga-quickstart/realtime_ui/client
+cd ~/git/camel-saga-quickstart/realtime_ui/client
 oc new-build --binary --name=ui-client -l app=ui-client -i nodejs-8-rhel7
 oc start-build ui-client --from-dir=. --follow
 oc new-app ui-client
