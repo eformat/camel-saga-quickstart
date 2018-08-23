@@ -9,7 +9,7 @@ This quickstart demonstrates how to use the new saga feature of Camel 2.21 as we
 - CQRS, event driven async MSA
 - May receive out of order cancels
 - Topic partition auto by id
-- Long running action, naryana transaction manager
+- Long running action, narayana transaction manager
 - MSA springboot, fuse camel
 - Kafka + Kafka Streams - strimzi.io
 - Angular + node.js UI
