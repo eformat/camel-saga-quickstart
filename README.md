@@ -1,77 +1,166 @@
-# Camel Saga Quickstart
+# Camel Saga with Kafka Streams
 
-This quickstarts demonstrates how to use the new saga feature of Camel 2.21.
+This quickstart demonstrates how to use the new saga feature of Camel 2.21 as well as using Kafka and Kafka Streams for storing and querying events.
 
-It runs on **Kubernetes** or **Openshift**. You can install a development version, like [Minishift](https://github.com/minishift/minishift/releases)
-or [Minikube](https://github.com/kubernetes/minikube/releases).
+![Saga Kafka Demo](saga-kafka-demo.png)
 
-<p style="text-align: center">
-    <img src="/saga-quickstart-system.png" alt="Saga Quickstart System"/>
-</p>
+- Saga pattern, compensating events, eventually consistent
+- Synchronous MSA, REST
+- CQRS, event driven async MSA
+- May receive out of order cancels
+- Topic partition auto by id
+- Long running action, naryana transaction manager
+- MSA springboot, fuse camel
+- Kafka + Kafka Streams - strimzi.io
+- Angular + node.js UI
 
-The `camel-saga-app` module has the following route:
+![Saga UI](saga-ui.png)
 
-```java
-from("timer:clock?period=5s")
-  .saga()
-    .setHeader("id", header(Exchange.TIMER_COUNTER))
-    .setHeader(Exchange.HTTP_METHOD, constant("POST"))
-    .log("Executing saga #${header.id}")
-    .to("http4://camel-saga-train-service:8080/api/train/buy/seat")
-    .to("http4://camel-saga-flight-service:8080/api/flight/buy");
+#### Kafka as a Service running on Kubernetes and OpenShift
+
+- Install Kafka
+- Create Kafka Cluster
+
+https://github.com/strimzi/strimzi#openshift
+
+![Kafka Architecture](kafka-uml.png)
+
+![Kafka Cluster Operator](cluster_operator.png)
+
+##### Create Kafka Topics
+
+![Kafka Topic Operator](topic_operator.png)
+
+```bash
+oc create -n strimzi -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flights
+  labels:
+    strimzi.io/kind: topic
+    strimzi.io/cluster: my-cluster
+data:
+  name: flights
+  partitions: "1"
+  replicas: "1"
+  config: |-
+    {
+      "retention.bytes": "1073741824",
+      "retention.ms": "86400000",
+      "segment.bytes": "1073741824"
+    }
+EOF
+
+oc create -n strimzi -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trains
+  labels:
+    strimzi.io/kind: topic
+    strimzi.io/cluster: my-cluster
+data:
+  name: trains
+  partitions: "1"
+  replicas: "1"
+  config: |-
+    {
+      "retention.bytes": "1073741824",
+      "retention.ms": "86400000",
+      "segment.bytes": "1073741824"
+    }
+EOF
+
+oc create -n strimzi -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payments
+  labels:
+    strimzi.io/kind: topic
+    strimzi.io/cluster: my-cluster
+data:
+  name: payments
+  partitions: "1"
+  replicas: "1"
+  config: |-
+    {
+      "retention.bytes": "1073741824",
+      "retention.ms": "86400000",
+      "segment.bytes": "1073741824"
+    }
+EOF
+
+
+oc create -n strimzi -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trips
+  labels:
+    strimzi.io/kind: topic
+    strimzi.io/cluster: my-cluster
+data:
+  name: trips
+  partitions: "1"
+  replicas: "1"
+  config: |-
+    {
+      "retention.bytes": "1073741824",
+      "retention.ms": "86400000",
+      "segment.bytes": "1073741824"
+    }
+EOF
 ```
 
-It executes *2 remote actions* within a saga:
-- Buy a train ticket
-- Buy an airplane ticket
+##### Kafka commands
 
-Each action in turn will make a call to the payment service *within the context of the saga*. *Calls to payment fail with 15% probability*.
+```bash
+oc exec -it my-cluster-zookeeper-0 -n strimzi -- bin/kafka-tpoics.sh --list --bootstrap-server=my-cluster-kafka-bootstrap:9092
 
-Since all actions are executed in the context of a saga, whenever one of the payment action fails (or another action, for any reason), 
-the whole saga is compensated (cancelled) automatically.
+oc exec -it my-cluster-zookeeper-0 -n strimzi -- bin/kafka-console-consumer.sh --bootstrap-server=my-cluster-kafka-bootstrap:9092 --from-beginning \
+    --topic flights \
+    --formatter kafka.tools.DefaultMessageFormatter \
+    --property print.key=true \
+    --property print.value=true 
 
-Each atomic action declares its corresponding compensating action using the new Saga EIP DSL. For example, the train 
-route is:
+oc exec -it my-cluster-zookeeper-0 -n strimzi -- bin/kafka-console-consumer.sh --bootstrap-server=my-cluster-kafka-bootstrap:9092 --from-beginning \
+    --topic trains \
+    --formatter kafka.tools.DefaultMessageFormatter \
+    --property print.key=true \
+    --property print.value=true 
 
-```java
-rest().post("/train/buy/seat")
-  .param().type(RestParamType.header).name("id").required(true).endParam()
-  .route()
-  .saga()
-    .propagation(SagaPropagation.SUPPORTS)
-    .option("id", header("id"))
-    .compensation("direct:cancelPurchase") // <-- compensation
-  .log("Buying train seat #${header.id}")
-  .to("http4://camel-saga-payment-service:8080/api/pay?bridgeEndpoint=true&type=train")
-  .log("Payment for train #${header.id} done");
+oc exec -it my-cluster-zookeeper-0 -n strimzi -- bin/kafka-console-consumer.sh --bootstrap-server=my-cluster-kafka-bootstrap:9092 --from-beginning \
+    --topic payments \
+    --formatter kafka.tools.DefaultMessageFormatter \
+    --property print.key=true \
+    --property print.value=true
 
-from("direct:cancelPurchase") // <-- compensation points to this
-  .log("Train purchase #${header.id} has been cancelled");
+oc exec -it my-cluster-zookeeper-0 -n strimzi -- bin/kafka-console-consumer.sh --bootstrap-server=my-cluster-kafka-bootstrap:9092 --from-beginning \
+    --topic trips \
+    --formatter kafka.tools.DefaultMessageFormatter \
+    --property print.key=true \
+    --property print.value=true 
 ```
 
-## Requirements
+#### Deploy LRA Co-Ordinator
 
-### Openshift or Kubernetes
-
-You can install [Minishift](https://github.com/minishift/minishift/releases).
-
-## Running the demo
-
-This project uses the [Fabric8 Maven Plugin](https://maven.fabric8.io/) to deploy itself automatically to Openshift or Kubernetes.
-
-After you connect to the cluster, type the following command on a terminal from the repository root:
+The upstream image has issues
 
 ```
+oc create -f lra-coordinator.yaml
+```
 
---oc create -f lra-coordinator.yaml
+So deploy manual build
 
---
--- lra template does not work ?
--- try https://github.com/xstefank/lra-service
---
-cd ~/git/lra-service/lra-coordinator
+```bash
+git clone git@github.com:eformat/lra-service.git
+cd /home/mike/git/lra-service/lra-coordinator
 mvn clean package fabric8:deploy
+```
 
+```bash
 oc create -f - <<EOF
 {
   "apiVersion": "v1",
@@ -89,12 +178,50 @@ oc create -f - <<EOF
   }
 }
 EOF
+```
 
+```bash
 oc volume dc/lra-coordinator --add --overwrite -t persistentVolumeClaim --claim-name=lra-data --name=lra-data --mount-path=/deployments/data
+```
 
---
+#### Deploy Core Saga Applications
+
+```bash
 cd ~/git/camel-saga-quickstart
 mvn clean fabric8:deploy
 ```
 
-Look into Openshift/Kubernetes console, all components will be deployed. You can follow the logs of the different services to see compensating actions.
+#### Deploy UI Applications
+
+##### UI Server
+
+```bash
+oc import-image --all --insecure=true -n openshift --confirm registry.access.redhat.com/rhscl/nodejs-8-rhel7
+cd ~/home/mike/git/camel-saga-quickstart/realtime_ui/server
+oc new-build --binary --name=ui-server -l app=ui-server -i nodejs-8-rhel7
+oc start-build ui-server --from-dir=. --follow
+-- -e KAFKA_URL
+oc new-app ui-server
+oc expose svc ui-server
+
+```
+
+##### UI Client
+
+```bash
+cd ~/home/mike/git/camel-saga-quickstart/realtime_ui/client
+oc new-build --binary --name=ui-client -l app=ui-client -i nodejs-8-rhel7
+oc start-build ui-client --from-dir=. --follow
+oc new-app ui-client
+oc expose svc ui-client
+```
+
+#### TODO
+
+- Cassandra CDC
+- Istio (chaos, fallback, canary, slow consumers)
+- Full HA replicas + partitions
+- Compensating actions must succeed
+- CQRS blocking read instead if sliding window
+- Payload to json instead of strings
+- Single replica dtx manager (narayana) is not H/A in OCP - scaling still to be supported
