@@ -216,6 +216,18 @@ oc new-app ui-client
 oc expose svc ui-client
 ```
 
+##### Istio
+
+Deploy [Istio](https://istio.io/docs/setup/kubernetes/platform-setup/openshift/) to your cluster. Then Istio'ize your apps:
+
+```bash
+oc apply -f <(istioctl kube-inject -f camel-saga-app/target/classes/META-INF/fabric8/openshift/camel-saga-app-deploymentconfig.yml)
+oc apply -f <(istioctl kube-inject -f camel-saga-flight-service/target/classes/META-INF/fabric8/openshift/camel-saga-flight-service-deploymentconfig.yml)
+oc apply -f <(istioctl kube-inject -f camel-saga-train-service/target/classes/META-INF/fabric8/openshift/camel-saga-train-service-deploymentconfig.yml)
+oc apply -f <(istioctl kube-inject -f camel-saga-payment-service/target/classes/META-INF/fabric8/openshift/camel-saga-payment-service-deploymentconfig.yml)
+oc apply -f <(istioctl kube-inject -f ~/git/lra-service/lra-coordinator/target/classes/META-INF/fabric8/openshift/lra-coordinator-deploymentconfig.yml)
+``` 
+
 #### TODO
 
 - Cassandra CDC
