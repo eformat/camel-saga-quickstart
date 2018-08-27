@@ -150,7 +150,7 @@ The upstream image may have issues. Try create a command in the template:
 
 ```
 oc create -f lra-coordinator-template.yaml
-oc new-app --template=lra-coordinator -e LOG_LEVEL=TRACE
+oc new-app -lapp=lra-coordinator --template=lra-coordinator -e LOG_LEVEL=TRACE
 ```
 
 Can deploy a manual build as well if required:
@@ -222,11 +222,19 @@ oc expose svc ui-client
 Deploy [Istio](https://istio.io/docs/setup/kubernetes/platform-setup/openshift/) to your cluster. Then Istio'ize your apps:
 
 ```bash
+-- apps
 oc apply -f <(istioctl kube-inject -f camel-saga-app/target/classes/META-INF/fabric8/openshift/camel-saga-app-deploymentconfig.yml)
 oc apply -f <(istioctl kube-inject -f camel-saga-flight-service/target/classes/META-INF/fabric8/openshift/camel-saga-flight-service-deploymentconfig.yml)
 oc apply -f <(istioctl kube-inject -f camel-saga-train-service/target/classes/META-INF/fabric8/openshift/camel-saga-train-service-deploymentconfig.yml)
 oc apply -f <(istioctl kube-inject -f camel-saga-payment-service/target/classes/META-INF/fabric8/openshift/camel-saga-payment-service-deploymentconfig.yml)
+
+-- lra build from source
 oc apply -f <(istioctl kube-inject -f ~/git/lra-service/lra-coordinator/target/classes/META-INF/fabric8/openshift/lra-coordinator-deploymentconfig.yml)
+
+-- lra built from template
+oc create -f lra-coordinator-template.yaml
+oc new-app -lapp=lra-coordinator --template=lra-coordinator -e LOG_LEVEL=TRACE -o yaml > /tmp/lra-coordinator.yml
+oc apply -f <(istioctl kube-inject -f /tmp/lra-coordinator.yml) -n saga
 ``` 
 
 #### TODO
