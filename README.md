@@ -146,13 +146,14 @@ oc exec -it my-cluster-zookeeper-0 -n strimzi -- bin/kafka-console-consumer.sh -
 
 #### Deploy LRA Co-Ordinator
 
-The upstream image has issues
+The upstream image may have issues. Try create a command in the template:
 
 ```
-oc create -f lra-coordinator.yaml
+oc create -f lra-coordinator-template.yaml
+oc new-app --template=lra-coordinator -e LOG_LEVEL=TRACE
 ```
 
-So deploy manual build
+Can deploy a manual build as well if required:
 
 ```bash
 git clone git@github.com:eformat/lra-service.git

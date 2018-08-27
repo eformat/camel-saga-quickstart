@@ -99,6 +99,7 @@ objects:
         containers:
         - imagePullPolicy: IfNotPresent
           name: ${APPLICATION_NAME}
+          command: [ "/bin/sh", "-c", "/usr/lib/jvm/java/bin/java/ -Xmx512m -Dswarm.transactions.object-store-path=/data -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true -cp . -jar /deployments/lra-coordinator-swarm.jar" ]
           env:
           - name: AB_JOLOKIA_OFF
             value: "true"
