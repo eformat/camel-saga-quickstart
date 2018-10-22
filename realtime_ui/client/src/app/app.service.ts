@@ -14,7 +14,7 @@ export class AppService {
     trainobserver: Observer<any>;
 
     getPay(): Observable<any> {
-        this.socket = io('http://ui-server-saga.apps.bar.com');
+        this.socket = io('http://ui-server.saga.svc:8080');
         this.socket.on('pay_data', (res) => {
             this.payobserver.next(res.data);
         });
@@ -24,7 +24,7 @@ export class AppService {
     }
 
     getFlight(): Observable<any> {
-        this.socket = io('http://ui-server-saga.apps.bar.com');
+        this.socket = io('http://ui-server.saga.svc:8080');
         this.socket.on('flight_data', (res) => {
             this.flightobserver.next(res.data);
         });
@@ -34,7 +34,7 @@ export class AppService {
     }
 
     getTrain(): Observable<any> {
-        this.socket = io('http://ui-server-saga.apps.bar.com');
+        this.socket = io('http://ui-server.saga.svc:8080');
         this.socket.on('train_data', (res) => {
             this.trainobserver.next(res.data);
         });
@@ -53,5 +53,3 @@ export class AppService {
     }
 
 }
-
-
