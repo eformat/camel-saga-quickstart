@@ -117,7 +117,8 @@ EOF
 ##### Kafka commands
 
 ```bash
-oc exec -it my-cluster-zookeeper-0 -n strimzi -- bin/kafka-tpoics.sh --list --bootstrap-server=my-cluster-kafka-bootstrap:9092
+oc exec -it my-cluster-zookeeper-0 -n strimzi -- bin/kafka-topics.sh --list --bootstrap-server=my-cluster-kafka-bootstrap:9092
+oc exec -it my-cluster-zookeeper-0 -c zookeeper -n strimzi -- bin/kafka-topics.sh --zookeeper localhost:21810 --list
 
 oc exec -it my-cluster-zookeeper-0 -n strimzi -- bin/kafka-console-consumer.sh --bootstrap-server=my-cluster-kafka-bootstrap:9092 --from-beginning \
     --topic flights \
@@ -149,6 +150,7 @@ oc exec -it my-cluster-zookeeper-0 -n strimzi -- bin/kafka-console-consumer.sh -
 The upstream image may have issues. Try create a command in the template:
 
 ```
+oc new-project saga --display-name='Saga Kafa LRA' --description='Saga Kafa LRA'
 oc create -f lra-coordinator-template.yaml
 oc new-app -lapp=lra-coordinator --template=lra-coordinator -e LOG_LEVEL=TRACE
 ```
@@ -182,12 +184,13 @@ EOF
 ```
 
 ```bash
-oc volume dc/lra-coordinator --add --overwrite -t persistentVolumeClaim --claim-name=lra-data --name=lra-data --mount-path=/deployments/data
+oc set volume dc/lra-coordinator --add --overwrite -t persistentVolumeClaim --claim-name=lra-data --name=lra-data --mount-path=/deployments/data
 ```
 
 #### Deploy Core Saga Applications
 
 ```bash
+oc project saga
 cd ~/git/camel-saga-quickstart
 mvn clean fabric8:deploy
 ```
@@ -197,9 +200,8 @@ mvn clean fabric8:deploy
 ##### UI Server
 
 ```bash
-oc import-image --all --insecure=true -n openshift --confirm registry.access.redhat.com/rhscl/nodejs-8-rhel7
 cd ~/git/camel-saga-quickstart/realtime_ui/server
-oc new-build --binary --name=ui-server -l app=ui-server -i nodejs-8-rhel7
+oc new-build --binary --name=ui-server -l app=ui-server -i nodejs:8
 oc start-build ui-server --from-dir=. --follow
 -- -e KAFKA_URL
 oc new-app ui-server
@@ -211,7 +213,7 @@ oc expose svc ui-server
 
 ```bash
 cd ~/git/camel-saga-quickstart/realtime_ui/client
-oc new-build --binary --name=ui-client -l app=ui-client -i nodejs-8-rhel7
+oc new-build --binary --name=ui-client -l app=ui-client -i nodejs:8
 oc start-build ui-client --from-dir=. --follow
 oc new-app ui-client
 oc expose svc ui-client
